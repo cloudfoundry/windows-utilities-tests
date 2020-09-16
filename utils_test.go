@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -26,8 +24,6 @@ import (
 )
 
 const BOSH_TIMEOUT = 90 * time.Minute
-const GoZipFile = "go1.7.1.windows-amd64.zip"
-const GolangURL = "https://storage.googleapis.com/golang/" + GoZipFile
 
 type ManifestProperties struct {
 	DeploymentName  string
@@ -286,32 +282,6 @@ func (config *Config) doSSHLogin(targetIP string) *Session {
 
 func runCommand(cmd string, args ...string) (*Session, error) {
 	return Start(exec.Command(cmd, args...), GinkgoWriter, GinkgoWriter)
-}
-
-//noinspection GoUnusedFunction
-func downloadGo() (string, error) {
-	dirname, err := ioutil.TempDir("", "")
-	if err != nil {
-		return "", err
-	}
-
-	path := filepath.Join(dirname, GoZipFile)
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	res, err := http.Get(GolangURL)
-	if err != nil {
-		return "", err
-	}
-	defer res.Body.Close()
-	if _, err := io.Copy(f, res.Body); err != nil {
-		return "", err
-	}
-
-	return path, nil
 }
 
 //noinspection GoUnusedFunction
