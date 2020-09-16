@@ -400,7 +400,10 @@ func createAndUploadRelease(releaseDir string) string {
 	pwd, err := os.Getwd()
 	Expect(err).To(Succeed())
 
-	absoluteFilePath := filepath.Join(pwd, releaseDir)
+	absoluteFilePath := releaseDir
+	if !filepath.IsAbs(absoluteFilePath) {
+		absoluteFilePath = filepath.Join(pwd, releaseDir)
+	}
 	Expect(os.Chdir(absoluteFilePath)).To(Succeed())
 	defer os.Chdir(pwd)
 
