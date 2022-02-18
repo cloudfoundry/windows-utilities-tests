@@ -82,6 +82,19 @@ var _ = Describe("Windows Utilities Release", func() {
 			err = bosh.Run(fmt.Sprintf("upload-stemcell %s", matches[0]))
 		}
 		Expect(err).To(Succeed())
+		// Azure doesn't create stemcell image until first deployment using that stemcell,
+		// which creates a race condition which breaks simultaneous deployments;
+		// to fix, we do an initial deployment to ensure image is there.
+		deploymentName := fmt.Sprintf("ensure-azure-stemcell-image-exists-%d", time.Now().UTC().UnixNano())
+		manifestPath, err := config.generateDefaultManifest(deploymentName)
+		Expect(err).To(Succeed())
+
+		err = bosh.Run(fmt.Sprintf("-d %s deploy %s", deploymentName, manifestPath))
+		Expect(err).To(Succeed())
+
+		Expect(bosh.Run(fmt.Sprintf("-d %s delete-deployment --force", deploymentName))).To(Succeed())
+		Expect(os.RemoveAll(manifestPath)).To(Succeed())
+
 		return []byte(fmt.Sprintf("%s#%s", releaseVersion, winUtilRelVersion))
 	}, func(versions []byte) {
 		dividerIndex := bytes.Index(versions, []byte{'#'})
